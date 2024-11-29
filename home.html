@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Vibetrack</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+            color: white;
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            background-color: #202020;
+            width: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .sidebar img {
+            width: 100px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            margin: 15px 0;
+            padding: 10px;
+            text-align: center;
+            width: 80%;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #ff9800;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .main-content h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .artists {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .artist-card {
+            width: 100px;
+            text-align: center;
+            color: white;
+        }
+
+        .artist-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+            border: 2px solid #ff9800;
+        }
+
+        .artist-card p {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .playlist {
+            margin-top: 40px;
+        }
+
+        .song-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #333;
+            border-radius: 8px;
+        }
+
+        .song-item p {
+            margin: 0;
+        }
+
+        .play-btn {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .play-btn:hover {
+            background-color: #e67e00;
+        }
+
+        #player-container {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <img src="ddd.JPG" alt="Logo Vibetrack">
+        <a href="perfil.html">Perfil</a>
+        <a href="musica.html">Cadastrar Música</a>
+        <a href="home.html">Home</a>
+    </div>
+
+    <div class="main-content">
+        <h1>Artistas do Momento</h1>
+        <div class="artists" id="artists">
+            <!-- Artistas dinâmicos -->
+        </div>
+
+        <h2 style="text-align: center; margin-top: 40px;">Músicas Cadastradas</h2>
+        <div class="playlist" id="playlist">
+            <!-- Músicas serão carregadas aqui -->
+        </div>
+        <div id="player-container">
+            <div id="player"></div>
+        </div>
+    </div>
+
+    <script>
+        // Exemplo de artistas com imagens
+        const artists = [
+            { name: 'The Weeknd', image: "the weeknd.jpg" },
+            { name: 'Maroon 5', image: "maroon.jpg" },
+            { name: 'Calvin Harris', image: "calvin.jpeg" }
+        ];
+
+        // Carregar artistas na página
+        const artistsContainer = document.getElementById('artists');
+        artists.forEach(artist => {
+            const artistCard = document.createElement('div');
+            artistCard.className = 'artist-card';
+            artistCard.innerHTML = `
+                <img src="${artist.image}" alt="${artist.name}">
+                <p>${artist.name}</p>
+            `;
+            artistsContainer.appendChild(artistCard);
+        });
+
+        // Recuperar playlist do localStorage
+        const playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+        const playlistContainer = document.getElementById('playlist');
+        const playerContainer = document.getElementById('player-container');
+        let player;
+
+        // Carregar a API do YouTube
+        function loadYouTubeAPI() {
+            const script = document.createElement('script');
+            script.src = "https://www.youtube.com/iframe_api";
+            document.body.appendChild(script);
+        }
+
+        // Inicializa o player do YouTube
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '0',
+                width: '0',
+                events: {
+                    onReady: onPlayerReady
+                }
+            });
+        }
+
+        function onPlayerReady() {
+            console.log('YouTube Player is ready!');
+        }
+
+        // Carregar playlist
+        function loadPlaylist() {
+            playlistContainer.innerHTML = '';
+            if (playlist.length === 0) {
+                playlistContainer.innerHTML = "<p style='text-align: center;'>Nenhuma música cadastrada.</p>";
+            } else {
+                playlist.forEach((song, index) => {
+                    const songItem = document.createElement('div');
+                    songItem.className = 'song-item';
+                    songItem.innerHTML = `
+                        <p>${song.artistName} - ${song.songName}</p>
+                        <button class="play-btn" onclick="playMusic('${song.link}')">▶️</button>
+                    `;
+                    playlistContainer.appendChild(songItem);
+                });
+            }
+        }
+
+        // Reproduzir música
+        function playMusic(link) {
+            const videoId = extractYouTubeId(link);
+            if (videoId) {
+                player.loadVideoById(videoId);
+                playerContainer.style.display = 'block';
+            } else {
+                alert("Link inválido!");
+            }
+        }
+
+        // Extrair ID do vídeo do link do YouTube
+        function extractYouTubeId(url) {
+            const regex = /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
+            const match = url.match(regex);
+            return match ? match[1] : null;
+        }
+
+        // Carregar a playlist ao iniciar
+        loadPlaylist();
+        loadYouTubeAPI();
+    </script>
+</body>
+</html>
